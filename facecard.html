@@ -56,7 +56,6 @@
     ::placeholder {
       color: #fff;
     }
-
     /* Add Your CSS From Here */
 	[data-cart-info] span {
 		display: inline-block;
@@ -124,7 +123,6 @@
     </style>
   </head>
   <body>
-
     <!-- your HTML goes here -->
 	<div data-cart-info>
 		<h1 class="mdc-typography--headline4"><span class="material-icons">shopping_cart</span><span data-bill></span></h1>
@@ -146,7 +144,6 @@
 	</div>
 	<button class="mdc-button" data-pay-btn>Pay Now</button>
     <script>
-
       const supportedCards = {
         visa, mastercard
       };
@@ -225,14 +222,51 @@
         });
       };
 
+	  const appState = {};
+
+	  const formatAsMoney = (amount, buyerCountry) => {
+		  let code = "US";
+		  let newCurrency = "USD";
+		  countries.forEach((item) => {
+			  if(item.country===buyerCountry){
+				  code = item.code;
+	              newCurrency = item.currency;
+			  }
+		  });
+		  return amount.toLocaleString(`en-${code}`, {
+			  style:"currency",
+			  currency:newCurrency,
+			  currencyDisplay:'symbol'
+			  });
+	  };
+	  const detectCardType = (first4Digits) => {};
+	  const validateCardExpiryDate = () => {};
+	  const validateCardHolderName = () => {};
+	  const uiCanInteract = () => {};
+	  const displayCartTotal = ({results}) => {
+		  const [data] = results;
+		  const {itemsInCart, buyerCountry} = data;
+		  appState.items = itemsInCart;
+		  appState.country = buyerCountry;
+		  appState.bill = itemsInCart.reduce((total, cur) => total + (cur.qyt.cur.price), 0);
+		  appState.billFormatted = formatAsMoney(appState.bill, appState.country);
+		  document.querySelector('[data-bill]').textContent=appState.billFormatted;
+		  appState.cardDigits = [];
+		  uiCanInteract();
+	  };
+
 	  const fetchBill = () => {
-        const apiHost = 'https://randomapi.com/api';
+        const apiHost = 'https://randomapi.com/api/006b08a801d82d0c9824dcfdfdfa3b3c';
 		const apiKey = '006b08a801d82d0c9824dcfdfdfa3b3c';
 		const apiEndpoint = `${apiHost}/${apiKey}`;
-
+		fetch(apiEndpoint)
+		.then(response=>response.json())
+		.then(data=>displayCartTotal(data))
+		.catch(err=>console.log(`Error: ${err}`));
       };
 
       const startApp = () => {
+		  fetchBill();
       };
 
       startApp();
