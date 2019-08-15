@@ -2,9 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" 
+          content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    
     <title>Mini App</title>
+    
     <style>
       body {
       margin: 0;
@@ -56,6 +59,7 @@
     ::placeholder {
       color: #fff;
     }
+      
     /* Add Your CSS From Here */
 	[data-cart-info] span {
 		display: inline-block;
@@ -123,6 +127,7 @@
     </style>
   </head>
   <body>
+    
     <!-- your HTML goes here -->
 	<div data-cart-info>
 		<h1 class="mdc-typography--headline4"><span class="material-icons">shopping_cart</span><span data-bill></span></h1>
@@ -144,6 +149,7 @@
 	</div>
 	<button class="mdc-button" data-pay-btn>Pay Now</button>
     <script>
+      
       const supportedCards = {
         visa, mastercard
       };
@@ -239,10 +245,70 @@
 			  currencyDisplay:'symbol'
 			  });
 	  };
+
+	  const flagIfInvalid = (field, isValid) => {
+		  if(isValid){
+			  field.classList.remove('is-invalid');
+		  }else{
+			  field.classList.add('is-invalid');
+		  }
+	  };
+
+	  const expiryDateFormatIsValid = (field) => {
+		  let [month, year] = field.split('/');
+		  let isMonth = month.match(/^(0?[1-9]|1[012])$/);
+		  let isYear = year.match(/\d{2}/);
+		  if(isMonth===null || isYear===null){
+			  return false
+		  }
+		  return true
+	  };
+
 	  const detectCardType = (first4Digits) => {};
-	  const validateCardExpiryDate = () => {};
-	  const validateCardHolderName = () => {};
-	  const uiCanInteract = () => {};
+	  const validateCardExpiryDate = ([field]) => {
+		  let currentDate = new Date();
+		  let givenDate = field.value.split('/').map(Number);
+		  let givenmonth = givenDate[0] - 1;
+		  let givenyear = givenDate[1] + 2000;
+		  let formDate = new Date(givenyear, givenmonth);
+		  let isvalid = expiryDateFormatIsValid(field.value);
+		  if(isvalid && formDate >= currentDate){
+			  flagIfInvalid(field, true);
+			  return true;
+		  }else{
+			  flagIfInvalid(field, false);
+			  return false;
+		  }
+	  };
+	  const validateCardHolderName = ({field}) => {
+		  let nameValidator = /^[a-zA-Z]{3,9}$/;
+		  let name = field.value.trim();
+		  let nameArr = name.split(' ');
+		  const [first, last] = nameArr;
+		  console.log("first");
+
+		  if(nameValidator.test(first) && nameValidator.test(last) && nameArr.length===3){
+			  flagIfInvalid(field, true);
+			  return true;
+		  }else{
+			  flagIfInvalid(field, false);
+			  return false;
+		  }
+	  };
+	  const validateCardNumber = () => {};
+	  const validatePayment = () => {
+		  validateCardNumber();
+		  validateCardHolderName();
+		  validateCardExpiryDate();
+	  };
+	  const smartInput = (event, fieldIndex) => {};
+	  const uiCanInteract = () => {
+		  const firstCreditCardNumber = document.querySelector("[data-cc-digits]>input:first-child");
+		  firstCreditCardNumber.focus();
+		  const btn = document.querySelector('[data-pay-btn]');
+		  btn.addEventListener('click', validatePayment);
+		  billHype();
+	  };
 	  const displayCartTotal = ({results}) => {
 		  const [data] = results;
 		  const {itemsInCart, buyerCountry} = data;
@@ -263,8 +329,9 @@
 		.then(response=>response.json())
 		.then(data=>displayCartTotal(data))
 		.catch(err=>console.log(`Error: ${err}`));
+        
       };
-
+      
       const startApp = () => {
 		  fetchBill();
       };
