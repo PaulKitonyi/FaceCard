@@ -231,54 +231,51 @@
 	  const appState = {};
 
 	  const formatAsMoney = (amount, buyerCountry) => {
-		  let code = "US";
-		  let newCurrency = "USD";
-		  countries.forEach((item) => {
-			  if(item.country===buyerCountry){
-				  code = item.code;
-	              newCurrency = item.currency;
-			  }
-		  });
+		  const country = countries.find(c=>c.country===buyerCountry);
+		  const {currency,code} = country;
+		  console.log(country);
 		  return amount.toLocaleString(`en-${code}`, {
-			  style:"currency",
-			  currency:newCurrency,
-			  currencyDisplay:'symbol'
-			  });
+			  style: 'currency',currency
+		  });
 	  };
 	  
-	  const flagIfInvalid = (field, isValid) => {};
-	  const expiryDateFormatIsValid = (field) => {};
-	  const detectCardType = (first4Digits) => {};
-	  const validateCardExpiryDate = ({field}) => {
-		  let todaysDate = new Date();
-		  let givenDate = field.value.split('/').map(Number);
-		  let givenMonth = givenDate[0] - 1;
-		  let givenYear = givenDate[1] + 2000;
-		  let formDate = new Date(givenYear, givenMonth);
-		  let isvalid = expiryDateFormatIsValid(field.value);
-		  
-		  if(isvalid && formDate >= todaysDate) {
-			  flagIfInvalid(field, true);
-			  return true;
-		  }else {
-			  flagIfInvalid(field, false);
-			  return false;
+	  const flagIfInvalid = (field, isValid) => {
+		  if(isValid) {
+			  field.classList.remove("is-invalid");
+		  } else {
+			  field.classList.add("is-invalid");
 		  }
 	  };
-	  const validateCardHolderName = ({field}) => {
-		  let nameValidator = /^[a-zA-Z]{3,9}$/;
-		  let name = field.value.trim();
-		  let names = name.split(' ');
-		  const [first, last] = names;
-		  console.log('first');
+	  const expiryDateFormatIsValid = (field) => {
+		  const dateFormatValidator = /^([0-9]0[1-2])\/([0-9][0-9])$/;
+		  return dateFormatValidator.test(field);
+	  };
+	  const detectCardType = (first4Digits) => {};
+	  const validateCardExpiryDate = () => {
+		  const cardExpiryDateField = document.querySelector('[data-cc-info] input:nth-child(2)');
+		  const expiryDateValue = cardExpiryDateField.value;
+		  const todaysDate = new Date();
+		  const currentYear = todaysDate.getFullYear();
+		  const currentMonth = todaysDate.getMonth();
+		  const dateCard = expiryDateValue.split('/');
+		  const year = parseInt(dateCard[1],10)+2000;
+		  const month = parseInt(dateCard[0],10);
 
-		  if(nameValidator.test(first) && nameValidator.test(last) && names.length == 2) {
-			  flagIfInvalid(field, true);
-			  return true;
-		  }else {
-			  flagIfInvalid(target, false);
-			  return false;
-		  }
+		  if(!expiryDateFormatIsValid(expiryDateValue) && year < currentYear || year < currentYear && month < currentMonth) {
+			  flagIfInvalid(cardExpiryDateField, false);
+				  return false;
+			  }else {
+				  flagIfInvalid(cardExpiryDateField, true);
+				  return true;
+			  }		
+	  };
+	  const validateCardHolderName = () => {
+		  let nameValidator = /^[a-zA-Z]{3,}(\s[a-zA-Z]{3,})$/;
+		  let name = document.querySelector("[data-cc-info]>input:nth-of-type(1)");
+		  let nameValue = name.value;
+		  let valid = nameValidator.test(nameValue);
+		  flagIfInvalid(name, valid);
+		  return valid;
 	  };
 	  const validateCardNumber = () => {};
 	  const validatePayment = () => {
@@ -300,9 +297,9 @@
 		  const {itemsInCart, buyerCountry} = data;
 		  appState.items = itemsInCart;
 		  appState.country = buyerCountry;
-		  appState.bill = itemsInCart.reduce((total, currentValue) => total + (currentValue.qty*currentValue.price), 0);
+		  appState.bill = itemsInCart.reduce((total, currentValue) => total.price*total.qty+currentValue.price*currentValue.qty);
 		  appState.billFormatted = formatAsMoney(appState.bill, appState.country);
-		  document.querySelector('[data-bill]').textContent=appState.billFormatted;
+		  document.querySelector('span[data-bill]').textContent=appState.billFormatted;
 		  appState.cardDigits = [];
 		  uiCanInteract();
 	  };
@@ -311,12 +308,10 @@
         const apiHost = 'https://randomapi.com/api';
 		const apiKey = '006b08a801d82d0c9824dcfdfdfa3b3c';
 		const apiEndpoint = `${apiHost}/${apiKey}`;
-		fetch(apiEndpoint)
-		.then(response=>response.json())
-		.then(data=>displayCartTotal(data))
-		.catch(err=>console.log(`Error: ${err}`));
+		fetch(apiEndpoint).then(response=>{ return response.json()}).then(data=>{displayCartTotal(data);}).catch(err=>console.log(err));
+        
       };
-
+      
       const startApp = () => {
 		  fetchBill();
       };
